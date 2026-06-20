@@ -77,6 +77,7 @@ download_bash_files() {
         [".bash_profile"]="https://github.com/amonetlol/dot/raw/refs/heads/main/dotfiles/bash/.bash_profile"
         [".aliases"]="https://github.com/amonetlol/dot/raw/refs/heads/main/dotfiles/bash/.aliases"
         [".aliases-arch"]="https://github.com/amonetlol/dot/raw/refs/heads/main/dotfiles/bash/.aliases-arch"
+        [".functions"]="https://github.com/amonetlol/dot/raw/refs/heads/main/dotfiles/bash/.functions"
     )
 
     for filename in "${!files[@]}"; do
@@ -93,9 +94,17 @@ download_bash_files() {
 setup_vmtools() {
     log "Ativando open-vm-tools"
 
-    sudo systemctl enable --now vmtoolsd.service
+    sudo systemctl enable vmtoolsd.service
 
     ok "vmtoolsd ativado"
+}
+
+setup_ssh() {
+    log "Ativando SSH"
+
+    sudo systemctl enable sshd.service
+
+    ok "SSH ativado"
 }
 
 setup_sddm_theme() {
@@ -116,15 +125,43 @@ setup_sddm_theme() {
 }
 
 enable_sddm() {
-    log "Ativando SDDM"
+    log "Habilitando SDDM"
 
     sudo systemctl enable sddm.service
 
     if systemctl is-active --quiet sddm.service; then
         ok "SDDM já está ativo"
     else
-        sudo systemctl start sddm.service || warn "Não foi possível iniciar o SDDM agora, mas ele foi habilitado para o próximo boot"
+        sudo systemctl enable sddm.service || warn "Não foi possível iniciar o SDDM agora, mas ele foi habilitado para o próximo boot"
     fi
+}
+
+setup_locale_ptbr() {
+    log "Configurando locale pt_BR.UTF-8"
+
+    if grep -q '^#pt_BR.UTF-8 UTF-8' /etc/locale.gen; then
+        sudo sed -i 's/^#pt_BR.UTF-8 UTF-8/pt_BR.UTF-8 UTF-8/' /etc/locale.gen
+    fi
+
+    if ! grep -q '^pt_BR.UTF-8 UTF-8' /etc/locale.gen; then
+        echo 'pt_BR.UTF-8 UTF-8' | sudo tee -a /etc/locale.gen >/dev/null
+    fi
+
+    sudo locale-gen
+    sudo localectl set-locale LANG=pt_BR.UTF-8
+
+    ok "Locale pt_BR.UTF-8 configurado"
+}
+
+setup_xdg_user_dirs_ptbr() {
+    log "Configurando xdg-user-dirs em PT-BR"
+
+    export LANG=pt_BR.UTF-8
+    export LC_ALL=pt_BR.UTF-8
+
+    xdg-user-dirs-update --force
+
+    ok "Diretórios do usuário configurados em PT-BR"
 }
 
 main() {
@@ -144,11 +181,39 @@ main() {
         fuse2 \
         fuse3 \
         sddm \
-        p7zip
+        p7zip \
+        thunar \
+        thunar-volman \
+        thunar-archive-plugin \
+        thunar-media-tags-plugin \
+        gvfs \
+        thumbler \
+        xdg-user-dirs \
+        xdg-user-dirs-gtk \
+        xarchiver \
+        unzip \
+        zip \
+        unrar \
+        openssh \
+        eza
+        fd \
+        fzf \        
+        bat \        
+        htop \
+        zoxide \
+        jq \
+        ripgrep \
+        bat \
+        mousepad
+        
+    
+    setup_locale_ptbr
+    setup_xdg_user_dirs_ptbr
 
     install_yay_bin
     download_bash_files
     setup_vmtools
+    setup_ssh
     setup_sddm_theme
     enable_sddm
 

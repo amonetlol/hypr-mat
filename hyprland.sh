@@ -208,6 +208,26 @@ write_hyprland_conf() {
 # Ajustes: Arch Linux + ABNT2 + apps definidos
 # ============================================================
 
+# === Variáveis de Ambiente (Wayland/Hyprland) ===
+env = XDG_CURRENT_DESKTOP, Hyprland
+env = XDG_SESSION_TYPE, wayland
+env = XDG_SESSION_DESKTOP, Hyprland
+
+# GTK
+env = GDK_BACKEND, wayland
+env = GDK_SCALE, 1
+
+# Qt
+env = QT_QPA_PLATFORM, wayland
+env = QT_AUTO_SCREEN_SCALE_FACTOR, 1
+env = QT_WAYLAND_DISABLE_WINDOWDECORATION, 1
+env = QT_QPA_PLATFORMTHEME, qt5ct   # ou qt6ct
+
+# Outras recomendadas
+env = MOZ_ENABLE_WAYLAND, 1
+env = ELECTRON_OZONE_PLATFORM_HINT, wayland
+
+
 source = ~/.config/hypr/colors.conf
 source = ~/.config/hypr/kb.conf
 
@@ -220,10 +240,11 @@ $terminal = foot
 $fileManager = thunar
 $browser = firefox
 
-$hub = rofi -show drun
-$wall = matuwall
-$cb = clipman-launcher
-$power = ~/.config/rofi/powermenu/type-4/powermenu.sh
+$hub = ""
+$rofi = rofi -show drun
+$wall = ""
+$cb = ""
+$power = wlogout
 
 # ------------------------------------------------------------
 # Monitor
@@ -236,9 +257,9 @@ monitor = , preferred, auto, 1
 exec-once = awww-daemon
 exec-once = wl-paste --type text --watch cliphist store
 exec-once = wl-paste --type image --watch cliphist store
-exec-once = swayosd-server
+#exec-once = swayosd-server
 exec-once = waybar
-exec-once = clipman
+#exec-once = clipman
 
 # ------------------------------------------------------------
 # Aparência
@@ -277,6 +298,16 @@ misc {
     disable_hyprland_logo = true
     disable_splash_rendering = true
 }
+
+# ------------------------------------------------------------
+# Cursor
+# ------------------------------------------------------------
+env = XCURSOR_THEME,Qogir-cursors
+env = XCURSOR_SIZE,24
+env = HYPRCURSOR_THEME,Qogir-cursors
+env = HYPRCURSOR_SIZE,24
+
+exec-once = hyprctl setcursor Qogir-cursors 24
 
 # ------------------------------------------------------------
 # Window rules
@@ -330,6 +361,7 @@ bind = , XF86MonBrightnessDown, exec, brightnessctl set 5%-
 bind = $mainMod, Return, exec, $terminal
 bind = $mainMod, E, exec, $fileManager
 bind = $mainMod, W, exec, $browser
+bind = $mainMod, D, exec, $rofi
 
 bind = , F12, exec, pkill waybar || waybar
 bind = , F11, exec, $hub

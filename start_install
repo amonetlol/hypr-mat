@@ -33,6 +33,7 @@ declare -a ordered_scripts=(
     "base.sh"
     "hyprland.sh"
     "rice.sh"
+    "gtkthemes.sh"
 )
 
 declare -A executed_scripts=()
