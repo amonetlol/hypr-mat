@@ -91,6 +91,24 @@ download_bash_files() {
     done
 }
 
+download_starship_files() {
+    log "Baixando arquivos starship para HOME"
+
+    declare -A files=(
+        [".config/starship.toml"]="https://github.com/amonetlol/dot/raw/refs/heads/main/dotfiles/starship/.config/starship.toml"
+    )
+
+    for filename in "${!files[@]}"; do
+        local destination="$HOME/$filename"
+        local url="${files[$filename]}"
+
+        rm -f "$destination"
+        wget -q --show-progress -O "$destination" "$url"
+
+        ok "$filename atualizado em $HOME/"
+    done
+}
+
 setup_vmtools() {
     log "Ativando open-vm-tools"
 
@@ -195,16 +213,41 @@ main() {
         zip \
         unrar \
         openssh \
-        eza
+        eza \
         fd \
-        fzf \        
-        bat \        
+        fzf \
+        bat \
         htop \
         zoxide \
         jq \
         ripgrep \
         bat \
-        mousepad
+        mousepad \
+        cliphist \
+        waybar \
+        rofi \
+        wlogout \
+        foot \
+        firefox \
+        fastfetch \
+        wl-clipboard \
+        grim \
+        slurp \
+        brightnessctl \
+        pamixer \
+        hyprland \
+        hyprlock \
+        hypridle \
+        awww \
+        ttf-jetbrains-mono-nerd \
+        playerctl \
+        network-manager-applet \
+        blueman \
+        bluez \
+        bluez-utils \
+        pavucontrol \
+        polkit-gnome \
+        papirus-icon-theme \
         
     
     setup_locale_ptbr
@@ -212,6 +255,7 @@ main() {
 
     install_yay_bin
     download_bash_files
+    download_starship_files
     setup_vmtools
     setup_ssh
     setup_sddm_theme

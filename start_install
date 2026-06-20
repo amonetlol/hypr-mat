@@ -31,7 +31,8 @@ ok "Permissões aplicadas"
 
 declare -a ordered_scripts=(
     "base.sh"
-    "hyprland.sh"
+    "stow_repo.sh"  
+    #"hypr_default.sh" ###FFF OFF
     "rice.sh"
     "gtkthemes.sh"
 )

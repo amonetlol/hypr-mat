@@ -2,14 +2,14 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_URL="https://github.com/latency-tech/hyprland-dotfiles"
-REPO_DIR="$ROOT_DIR/.repo_base/hyprland-dotfiles"
-DOTFILES_DIR="$HOME/.dotfiles"
-CONFIG_DIR="$HOME/.config"
+HYPR_DIR="$HOME/.config/hypr"
+HYPR_CONF="$HYPR_DIR/hyprland.conf"
+
+FOOT_DIR="$HOME/.config/foot"
+FOOT_CONF="$FOOT_DIR/foot.ini"
 
 log() {
-    printf "\n[HYPRLAND] %s\n" "$1"
+    printf "\n[HYPRLAND DEFAULT] %s\n" "$1"
 }
 
 ok() {
@@ -38,196 +38,67 @@ require_not_root() {
 }
 
 ensure_sudo() {
+    if ! command -v sudo >/dev/null 2>&1; then
+        die "sudo não encontrado."
+    fi
+
     sudo -v
 }
 
-require_yay() {
-    if ! command -v yay >/dev/null 2>&1; then
-        die "yay não encontrado. Rode primeiro o base.sh."
-    fi
-}
+backup_file() {
+    local file="$1"
 
-install_pacman_packages() {
-    log "Instalando pacotes oficiais necessários para o rice"
-
-    sudo pacman -S --needed --noconfirm \
-        hyprland \
-        hyprlock \
-        hypridle \
-        waybar \
-        rofi-wayland \
-        wlogout \
-        foot \
-        thunar \
-        firefox \
-        fastfetch \
-        cliphist \
-        wl-clipboard \
-        grim \
-        slurp \
-        brightnessctl \
-        pamixer \
-        playerctl \
-        network-manager-applet \
-        blueman \
-        bluez \
-        bluez-utils \
-        pavucontrol \
-        polkit-gnome \
-        papirus-icon-theme \
-        ttf-jetbrains-mono-nerd \
-        noto-fonts \
-        noto-fonts-emoji \
-        jq \
-        imagemagick \
-        unzip \
-        tar \
-        xz \
-        rsync
-
-    ok "Pacotes oficiais instalados"
-}
-
-install_aur_packages() {
-    log "Instalando pacotes AUR necessários para o rice"
-
-    local packages=(
-        matugen
-        matuwall
-        clipman
-        swayosd
-    )
-
-    yay -S --needed --noconfirm "${packages[@]}"
-
-    if ! yay -S --needed --noconfirm awww; then
-        warn "Pacote awww não instalou como 'awww'. Tentando awww-git."
-        yay -S --needed --noconfirm awww-git || warn "Não foi possível instalar awww/awww-git automaticamente."
-    fi
-
-    ok "Pacotes AUR instalados"
-}
-
-clone_or_update_repo() {
-    log "Baixando repo base do Hyprland"
-
-    mkdir -p "$(dirname "$REPO_DIR")"
-
-    if [[ -d "$REPO_DIR/.git" ]]; then
-        git -C "$REPO_DIR" pull --ff-only
-    else
-        rm -rf "$REPO_DIR"
-        git clone "$REPO_URL" "$REPO_DIR"
-    fi
-
-    ok "Repo base disponível em $REPO_DIR"
-}
-
-backup_path() {
-    local target="$1"
-
-    if [[ -e "$target" || -L "$target" ]]; then
-        local backup="${target}.bak.$(date +%Y%m%d-%H%M%S)"
-        mv "$target" "$backup"
+    if [[ -f "$file" || -L "$file" ]]; then
+        local backup="${file}.bak.$(date +%Y%m%d-%H%M%S)"
+        cp -a "$file" "$backup"
         warn "Backup criado: $backup"
     fi
-}
-
-link_configs() {
-    log "Movendo configs para ~/.dotfiles e criando links em ~/.config"
-
-    mkdir -p "$CONFIG_DIR"
-    mkdir -p "$DOTFILES_DIR"
-
-    local dirs=(
-        clipman
-        fastfetch
-        foot
-        hypr
-        matugen
-        matuwall
-        rofi
-        waybar
-        wlogout
-    )
-
-    for dir in "${dirs[@]}"; do
-        local src="$REPO_DIR/$dir"
-        local dot_dst="$DOTFILES_DIR/$dir"
-        local config_dst="$CONFIG_DIR/$dir"
-
-        if [[ ! -d "$src" ]]; then
-            warn "$dir não existe no repo base, pulando"
-            continue
-        fi
-
-        backup_path "$dot_dst"
-        cp -a "$src" "$dot_dst"
-
-        backup_path "$config_dst"
-        ln -s "$dot_dst" "$config_dst"
-
-        ok "$dir movido para ~/.dotfiles/$dir e linkado em ~/.config/$dir"
-    done
-}
-
-create_hypr_keyboard_config() {
-    log "Criando kb.conf com teclado br abnt2"
-
-    mkdir -p "$CONFIG_DIR/hypr"
-
-    cat > "$CONFIG_DIR/hypr/kb.conf" <<'EOF'
-input {
-    kb_layout = br
-    kb_variant = abnt2
-    kb_model =
-    kb_options =
-    kb_rules =
-
-    follow_mouse = 1
-    sensitivity = 0
-}
-EOF
-
-    ok "kb.conf criado"
 }
 
 write_hyprland_conf() {
     log "Gerando hyprland.conf personalizado"
 
-    local conf="$CONFIG_DIR/hypr/hyprland.conf"
+    mkdir -p "$HYPR_DIR"
 
-    if [[ -f "$conf" && ! -L "$conf" ]]; then
-        cp "$conf" "${conf}.bak.$(date +%Y%m%d-%H%M%S)"
-    fi
+    backup_file "$HYPR_CONF"
 
-    cat > "$conf" <<'EOF'
+    cat > "$HYPR_CONF" <<'EOF'
 # ============================================================
 # HYPRLAND CONFIG
 # Base: latency-tech/hyprland-dotfiles
 # Ajustes: Arch Linux + ABNT2 + apps definidos
 # ============================================================
 
-# === Variáveis de Ambiente (Wayland/Hyprland) ===
-env = XDG_CURRENT_DESKTOP, Hyprland
-env = XDG_SESSION_TYPE, wayland
-env = XDG_SESSION_DESKTOP, Hyprland
+# ------------------------------------------------------------
+# Variáveis de ambiente
+# ------------------------------------------------------------
+env = XDG_CURRENT_DESKTOP,Hyprland
+env = XDG_SESSION_TYPE,wayland
+env = XDG_SESSION_DESKTOP,Hyprland
 
 # GTK
-env = GDK_BACKEND, wayland
-env = GDK_SCALE, 1
+env = GDK_BACKEND,wayland
+env = GDK_SCALE,1
 
 # Qt
-env = QT_QPA_PLATFORM, wayland
-env = QT_AUTO_SCREEN_SCALE_FACTOR, 1
-env = QT_WAYLAND_DISABLE_WINDOWDECORATION, 1
-env = QT_QPA_PLATFORMTHEME, qt5ct   # ou qt6ct
+env = QT_QPA_PLATFORM,wayland
+env = QT_AUTO_SCREEN_SCALE_FACTOR,1
+env = QT_WAYLAND_DISABLE_WINDOWDECORATION,1
+env = QT_QPA_PLATFORMTHEME,qt5ct
 
-# Outras recomendadas
-env = MOZ_ENABLE_WAYLAND, 1
-env = ELECTRON_OZONE_PLATFORM_HINT, wayland
+# Apps
+env = MOZ_ENABLE_WAYLAND,1
+env = ELECTRON_OZONE_PLATFORM_HINT,wayland
 
+# Cursor
+env = XCURSOR_THEME,Qogir-cursors
+env = XCURSOR_SIZE,24
+env = HYPRCURSOR_THEME,Qogir-cursors
+env = HYPRCURSOR_SIZE,24
 
+# ------------------------------------------------------------
+# Imports
+# ------------------------------------------------------------
 source = ~/.config/hypr/colors.conf
 source = ~/.config/hypr/kb.conf
 
@@ -257,9 +128,8 @@ monitor = , preferred, auto, 1
 exec-once = awww-daemon
 exec-once = wl-paste --type text --watch cliphist store
 exec-once = wl-paste --type image --watch cliphist store
-#exec-once = swayosd-server
 exec-once = waybar
-#exec-once = clipman
+exec-once = hyprctl setcursor Qogir-cursors 24
 
 # ------------------------------------------------------------
 # Aparência
@@ -300,14 +170,18 @@ misc {
 }
 
 # ------------------------------------------------------------
-# Cursor
+# Teclado e mouse
 # ------------------------------------------------------------
-env = XCURSOR_THEME,Qogir-cursors
-env = XCURSOR_SIZE,24
-env = HYPRCURSOR_THEME,Qogir-cursors
-env = HYPRCURSOR_SIZE,24
+input {
+    kb_layout = br
+    kb_variant = abnt2
+    kb_model =
+    kb_options =
+    kb_rules =
 
-exec-once = hyprctl setcursor Qogir-cursors 24
+    follow_mouse = 1
+    sensitivity = 0
+}
 
 # ------------------------------------------------------------
 # Window rules
@@ -384,13 +258,54 @@ bind = , F6, layoutmsg, swapnext
 bind = $mainMod SHIFT, S, exec, grim -g "$(slurp)" - | wl-copy
 EOF
 
-    ok "hyprland.conf personalizado criado"
+    ok "hyprland.conf personalizado criado em $HYPR_CONF"
+}
+
+write_foot_conf() {
+    log "Gerando foot.ini personalizado"
+
+    mkdir -p "$FOOT_DIR"
+
+    backup_file "$FOOT_CONF"
+
+    cat > "$FOOT_CONF" <<'EOF'
+# Foot — Catppuccin Mocha (HyprPunk / dot-catppuccin)
+
+font=JetBrainsMono Nerd Font:size=11
+pad=8x8
+
+[colors-dark]
+foreground=74c7ec
+background=1e1e2e
+
+regular0=45475a
+regular1=f38ba8
+regular2=a6e3a1
+regular3=f9e2af
+regular4=89b4fa
+regular5=cba6f7
+regular6=94e2d5
+regular7=bac2de
+
+bright0=585b70
+bright1=f38ba8
+bright2=a6e3a1
+bright3=f9e2af
+bright4=89b4fa
+bright5=cba6f7
+bright6=94e2d5
+bright7=a6adc8
+EOF
+
+    ok "foot.ini personalizado criado em $FOOT_CONF"
 }
 
 reload_hyprland() {
-    if command -v hyprctl >/dev/null 2>&1; then
+    if [[ "${XDG_CURRENT_DESKTOP:-}" == "Hyprland" ]] && command -v hyprctl >/dev/null 2>&1; then
         log "Recarregando Hyprland"
         hyprctl reload || warn "Hyprland não pôde ser recarregado agora"
+    else
+        warn "Hyprland não está ativo nesta sessão. Reload ignorado."
     fi
 }
 
@@ -398,17 +313,12 @@ main() {
     require_arch
     require_not_root
     ensure_sudo
-    require_yay
 
-    install_pacman_packages
-    install_aur_packages
-    clone_or_update_repo
-    link_configs
-    create_hypr_keyboard_config
     write_hyprland_conf
+    write_foot_conf
     reload_hyprland
 
-    ok "Hyprland finalizado"
+    ok "Hyprland default finalizado"
 }
 
 main "$@"
