@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_URL="https://github.com/latency-tech/hyprland-dotfiles"
 REPO_DIR="$ROOT_DIR/.repo_base/hyprland-dotfiles"
+DOTFILES_DIR="$HOME/.dotfiles"
 CONFIG_DIR="$HOME/.config"
 
 log() {
@@ -133,9 +134,10 @@ backup_path() {
 }
 
 link_configs() {
-    log "Criando links em ~/.config"
+    log "Movendo configs para ~/.dotfiles e criando links em ~/.config"
 
     mkdir -p "$CONFIG_DIR"
+    mkdir -p "$DOTFILES_DIR"
 
     local dirs=(
         clipman
@@ -151,17 +153,21 @@ link_configs() {
 
     for dir in "${dirs[@]}"; do
         local src="$REPO_DIR/$dir"
-        local dst="$CONFIG_DIR/$dir"
+        local dot_dst="$DOTFILES_DIR/$dir"
+        local config_dst="$CONFIG_DIR/$dir"
 
         if [[ ! -d "$src" ]]; then
             warn "$dir não existe no repo base, pulando"
             continue
         fi
 
-        backup_path "$dst"
-        ln -s "$src" "$dst"
+        backup_path "$dot_dst"
+        cp -a "$src" "$dot_dst"
 
-        ok "$dir linkado em ~/.config/$dir"
+        backup_path "$config_dst"
+        ln -s "$dot_dst" "$config_dst"
+
+        ok "$dir movido para ~/.dotfiles/$dir e linkado em ~/.config/$dir"
     done
 }
 
