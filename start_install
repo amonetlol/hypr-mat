@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT_DIR"
+
+log() {
+    printf "\n[START] %s\n" "$1"
+}
+
+ok() {
+    printf "[OK] %s\n" "$1"
+}
+
+warn() {
+    printf "[AVISO] %s\n" "$1"
+}
+
+die() {
+    printf "[ERRO] %s\n" "$1" >&2
+    exit 1
+}
+
+log "Preparando permissões dos scripts"
+
+find "$ROOT_DIR" -maxdepth 1 -type f -name "*.sh" -exec chmod +x {} \;
+chmod +x "$ROOT_DIR/start_install"
+
+ok "Permissões aplicadas"
+
+declare -a ordered_scripts=(
+    "base.sh"
+    "hyprland.sh"
+    "rice.sh"
+)
+
+declare -A executed_scripts=()
+
+run_script() {
+    local script="$1"
+    local path="$ROOT_DIR/$script"
+
+    if [[ -f "$path" ]]; then
+        log "Executando $script"
+        bash "$path"
+        executed_scripts["$script"]=1
+        ok "$script finalizado"
+    else
+        warn "$script não encontrado, pulando"
+    fi
+}
+
+for script in "${ordered_scripts[@]}"; do
+    run_script "$script"
+done
+
+log "Verificando scripts extras na raiz"
+
+while IFS= read -r extra_script; do
+    script_name="$(basename "$extra_script")"
+
+    [[ "$script_name" == "start_install" ]] && continue
+    [[ -n "${executed_scripts[$script_name]:-}" ]] && continue
+
+    log "Executando script extra: $script_name"
+    bash "$extra_script"
+    ok "$script_name finalizado"
+done < <(find "$ROOT_DIR" -maxdepth 1 -type f -name "*.sh" | sort)
+
+ok "Instalação concluída"
