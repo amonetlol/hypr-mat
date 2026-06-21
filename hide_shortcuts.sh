@@ -19,6 +19,21 @@ warn() {
 
 mkdir -p "$APP_DIR_LOCAL"
 
+set_nodisplay_true() {
+    local file="$1"
+
+    # Remove NoDisplay antigo em qualquer lugar
+    sed -i '/^NoDisplay=/d' "$file"
+
+    # Coloca NoDisplay=true dentro do bloco principal [Desktop Entry]
+    # Antes de qualquer [Desktop Action ...]
+    if grep -q '^\[Desktop Action' "$file"; then
+        sed -i '/^\[Desktop Action/i NoDisplay=true' "$file"
+    else
+        sed -i '/^\[Desktop Entry\]/a NoDisplay=true' "$file"
+    fi
+}
+
 hide_desktop_by_name() {
     local wanted_name="$1"
     local found=0
@@ -31,11 +46,7 @@ hide_desktop_by_name() {
 
         cp "$desktop_file" "$local_file"
 
-        if grep -q '^NoDisplay=' "$local_file"; then
-            sed -i 's/^NoDisplay=.*/NoDisplay=true/' "$local_file"
-        else
-            printf '\nNoDisplay=true\n' >> "$local_file"
-        fi
+        set_nodisplay_true "$local_file"            
 
         ok "Ocultado: $wanted_name -> $filename"
         found=1
@@ -63,11 +74,7 @@ hide_desktop_by_filename() {
         return
     fi
 
-    if grep -q '^NoDisplay=' "$local_file"; then
-        sed -i 's/^NoDisplay=.*/NoDisplay=true/' "$local_file"
-    else
-        printf '\nNoDisplay=true\n' >> "$local_file"
-    fi
+    set_nodisplay_true "$local_file"
 
     ok "Ocultado: $filename"
 }
