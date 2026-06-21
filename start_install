@@ -35,6 +35,7 @@ declare -a ordered_scripts=(
     #"hypr_default.sh" ###FFF OFF
     "rice.sh"
     "gtkthemes.sh"
+    "hide_shortcuts.sh"
 )
 
 declare -A executed_scripts=()
