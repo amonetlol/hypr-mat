@@ -134,6 +134,7 @@ hide_desktop_by_name "xgpsspeed"
 hide_desktop_by_name "Utilitário de teste V4L2"
 hide_desktop_by_name "Micro"
 hide_desktop_by_name "Alacritty"
+hide_desktop_by_name "Qt6 Settings"
 
 # Fallbacks por nome de arquivo comum
 hide_desktop_by_filename "btop.desktop"
@@ -156,6 +157,7 @@ hide_desktop_by_filename "qvidcap.desktop"
 hide_desktop_by_filename "xgps.desktop"
 hide_desktop_by_filename "xgpsspeed.desktop"
 hide_desktop_by_filename "thunar-settings.desktop"
+hide_desktop_by_filename "qt6ct.desktop"
 
 log "Renomeando Thunar"
 
